@@ -2,7 +2,7 @@
 name: 태스크 등록
 about: 신규 개발이 필요한 기능 혹은 인프라 구축 태스크를 등록합니다.
 title: "[Phase N] 기능명"
-labels: "To do / In progress / Done"
+labels: "Task"
 ---
 
 ## 업무 범위
