@@ -31,7 +31,7 @@ body:
     attributes:
       label: 목표
       description: 이 작업을 통해 달성하고자 하는 것이 무엇인가요?
-      placeholder: 예시: Main Region의 기본 인프라를 테라폼으로 구축합니다.
+      placeholder: e.g. Main Region의 기본 인프라를 테라폼으로 구축합니다.
     validations:
       required: true
 
