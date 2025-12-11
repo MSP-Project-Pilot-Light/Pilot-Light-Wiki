@@ -15,7 +15,7 @@ body:
         - "Phase5: 결과물 정리 및 발표 준비"
     validations:
       required: true
-  
+
   - type: dropdown
     id: scope
     attributes:
