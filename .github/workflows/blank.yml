@@ -1,0 +1,31 @@
+name: SSM run command on private EC2 (app1/app2)
+
+on:
+  workflow_dispatch:
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  ssm:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Configure AWS credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::<ACCOUNT_ID>:role/<GITHUB_OIDC_ROLE_NAME>
+          aws-region: ap-northeast-1
+
+      - name: Who am I (debug)
+        run: aws sts get-caller-identity
+
+      - name: Run SSM command on app1/app2
+        run: |
+          set -x
+          aws ssm send-command \
+            --document-name "AWS-RunShellScript" \
+            --instance-ids "i-053e4646c604abe8a" "i-063e3121bb2da3e55" \
+            --parameters commands="hostname","uptime","curl -s localhost || true" \
+            --comment "GitHub Actions -> SSM RunCommand"
