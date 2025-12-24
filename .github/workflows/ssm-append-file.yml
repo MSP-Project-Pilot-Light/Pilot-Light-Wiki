@@ -2,12 +2,12 @@
   shell: bash
   run: |
     cat > params.json <<'JSON'
-    {
-      "commands": [
-        "mkdir -p /tmp/mj-tesst",
-        "echo 'IM COMING BABABABABABABBABBBABBA  MERRY christmas!' >> /tmp/mj-tesst/hello.txt"
-      ]
-    }
+{
+  "commands": [
+    "mkdir -p /tmp/mj-tesst",
+    "echo 'IM COMING BABABABABABABBABBBABBA MERRY christmas!' >> /tmp/mj-tesst/hello.txt"
+  ]
+}
 JSON
 
 - name: Append message to private EC2 file via SSM
