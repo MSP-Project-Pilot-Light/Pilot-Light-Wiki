@@ -10,26 +10,14 @@ permissions:
 jobs:
   ssm:
     runs-on: ubuntu-latest
-
     steps:
       - name: Configure AWS credentials (OIDC)
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          role-to-assume: arn:aws:iam::626614672806:role/pr_dr_oidc_github 
+          role-to-assume: arn:aws:iam::<ACCOUNT_ID>:role/<GITHUB_OIDC_ROLE_NAME>
           aws-region: ap-northeast-1
 
-      - name: Write params.json
-        shell: bash
-        run: |
-          cat > params.json <<'JSON'
-{
-  "commands": [
-    "echo 'MERRY CHRISTMAS!!!' >> /tmp/mj-tesst/hello.txt"
-  ]
-}
-JSON
-
-      - name: Append message to private EC2 file via SSM
+      - name: Append "MERRY CHRISTMAS!!!" to file via SSM
         shell: bash
         run: |
           set -euo pipefail
@@ -37,4 +25,4 @@ JSON
             --document-name "AWS-RunShellScript" \
             --instance-ids "i-053e4646c604abe8a" \
             --comment "GitHub OIDC -> append MERRY CHRISTMAS" \
-            --parameters file://params.json
+            --parameters '{"commands":["echo '\''MERRY CHRISTMAS!!!'\'' >> /tmp/mj-tesst/hello.txt"]}'
