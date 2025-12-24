@@ -1,11 +1,27 @@
-name: Proof HTML
+name: SSM control private EC2
+
 on:
-  push:
   workflow_dispatch:
+
+permissions:
+  id-token: write   # OIDC 필수
+  contents: read
+
 jobs:
-  build:
+  ssm-command:
     runs-on: ubuntu-latest
+
     steps:
-      - uses: anishathalye/proof-html@v1.1.0
+      - name: Configure AWS credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
         with:
-          directory: ./
+          role-to-assume: arn:aws:iam::<ACCOUNT_ID>:role/github-ssm-role
+          aws-region: ap-northeast-1
+
+      - name: Run command on private app EC2
+        run: |
+          aws ssm send-command \
+            --document-name "AWS-RunShellScript" \
+            --instance-ids "i-app1" "i-app2" \
+            --parameters commands="hostname","uptime","curl -s localhost" \
+            --comment "GitHub Actions → private EC2 via SSM"
