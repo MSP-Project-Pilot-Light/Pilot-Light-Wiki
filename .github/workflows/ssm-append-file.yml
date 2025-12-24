@@ -29,5 +29,5 @@ jobs:
           --document-name "AWS-RunShellScript" \
           --instance-ids "i-053e4646c604abe8a" \
           --comment "GitHub OIDC -> append text to private EC2" \
-          --parameters '{"commands":["mkdir -p /tmp/mj-tesst","echo \"IM COMING Private Instance!\" >> /tmp/mj-tesst/hello.txt"]}'
+          --parameters '{"commands":["mkdir -p /tmp/mj-tesst","echo \"I'LL BE BACK!\" >> /tmp/mj-tesst/hello.txt"]}'
 
