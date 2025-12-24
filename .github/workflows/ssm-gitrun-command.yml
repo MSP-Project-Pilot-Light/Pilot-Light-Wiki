@@ -26,6 +26,6 @@ jobs:
           set -x
           aws ssm send-command \
             --document-name "AWS-RunShellScript" \
-            --instance-ids "i-APP1" "i-APP2" \
+            --instance-ids "i-053e4646c604abe8a" "i-063e3121bb2da3e55" \
             --parameters commands="hostname","uptime","curl -s localhost || true" \
             --comment "GitHub Actions -> SSM RunCommand"
