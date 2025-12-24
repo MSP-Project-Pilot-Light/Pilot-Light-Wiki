@@ -5,7 +5,7 @@
     {
       "commands": [
         "mkdir -p /tmp/mj-tesst",
-        "echo 'IM COMING Private Instance!' >> /tmp/mj-tesst/hello.txt"
+        "echo 'IM COMING BABABABABABABBABBBABBA!' >> /tmp/mj-tesst/hello.txt"
       ]
     }
 JSON
