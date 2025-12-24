@@ -1,22 +1,40 @@
-- name: Write params.json
-  shell: bash
-  run: |
-    cat > params.json <<'JSON'
+name: Append MERRY CHRISTMAS via SSM
+
+on:
+  workflow_dispatch:
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  ssm:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Configure AWS credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::626614672806:role/pr_dr_oidc_github 
+          aws-region: ap-northeast-1
+
+      - name: Write params.json
+        shell: bash
+        run: |
+          cat > params.json <<'JSON'
 {
   "commands": [
-    "mkdir -p /tmp/mj-tesst",
-    "echo 'IM COMING BABABABABABABBABBBABBAMERRY christmas!' >> /tmp/mj-tesst/hello.txt"
+    "echo 'MERRY CHRISTMAS!!!' >> /tmp/mj-tesst/hello.txt"
   ]
 }
 JSON
 
-- name: Append message to private EC2 file via SSM
-  shell: bash
-  run: |
-    set -euo pipefail
-
-    aws ssm send-command \
-      --document-name "AWS-RunShellScript" \
-      --instance-ids "i-053e4646c604abe8a" \
-      --comment "GitHub OIDC -> append text to private EC2" \
-      --parameters file://params.json
+      - name: Append message to private EC2 file via SSM
+        shell: bash
+        run: |
+          set -euo pipefail
+          aws ssm send-command \
+            --document-name "AWS-RunShellScript" \
+            --instance-ids "i-053e4646c604abe8a" \
+            --comment "GitHub OIDC -> append MERRY CHRISTMAS" \
+            --parameters file://params.json
