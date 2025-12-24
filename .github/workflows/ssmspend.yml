@@ -1,0 +1,22 @@
+- name: Write params.json
+  shell: bash
+  run: |
+    cat > params.json <<'JSON'
+{
+  "commands": [
+    "mkdir -p /tmp/mj-tesst",
+    "echo 'IM COMING BABABABABABABBABBBABBAMERRY christmas!' >> /tmp/mj-tesst/hello.txt"
+  ]
+}
+JSON
+
+- name: Append message to private EC2 file via SSM
+  shell: bash
+  run: |
+    set -euo pipefail
+
+    aws ssm send-command \
+      --document-name "AWS-RunShellScript" \
+      --instance-ids "i-053e4646c604abe8a" \
+      --comment "GitHub OIDC -> append text to private EC2" \
+      --parameters file://params.json
