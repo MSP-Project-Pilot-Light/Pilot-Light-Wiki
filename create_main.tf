@@ -487,7 +487,8 @@ resource "aws_launch_template" "web" {
       </body>
     </html>
   HTML
-  EOF )
+  EOF
+  )
 
   tag_specifications {
     resource_type = "instance"
