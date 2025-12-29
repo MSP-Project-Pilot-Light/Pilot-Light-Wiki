@@ -34,6 +34,17 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Path Diagnosis
+        run: |
+          echo "Current Path: $(pwd)"
+          echo "Files in Root:"
+          ls -F
+          # create_main.tf 파일이 존재하는지 명시적 확인
+          if [ ! -f "create_main.tf" ]; then
+            echo "❌ ERROR: create_main.tf not found in current directory!"
+            exit 1
+          fi
+
       # 2. AWS 인증 (OIDC)
       - name: Configure AWS credentials via OIDC
         uses: aws-actions/configure-aws-credentials@v4
