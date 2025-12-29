@@ -1,8 +1,9 @@
+```hcl
 ############################
-# 실행하기 전 메모장에서 ctrl+h 눌러서 
-# ap-south-1 > 본인이 사용할 main region 
-# us-west-2 > 본인이 사용할 dr region 
-# 이렇게 바꿔줘야 합니다 
+# 실행하기 전 메모장에서 ctrl+h 눌러서
+# ap-south-1 > 본인이 사용할 main region
+# us-west-2 > 본인이 사용할 dr region
+# 이렇게 바꿔줘야 합니다
 ############################
 
 terraform {
@@ -80,7 +81,7 @@ resource "aws_vpc" "this" {
   cidr_block           = "10.20.0.0/16"
   enable_dns_support   = true
   enable_dns_hostnames = true
-  tags = merge(local.tags, { Name = "pldr-main-vpc" })
+  tags                 = merge(local.tags, { Name = "pldr-main-vpc" })
 }
 
 ############################
@@ -92,7 +93,7 @@ resource "aws_subnet" "public" {
   cidr_block              = cidrsubnet("10.20.0.0/16", 4, count.index)
   availability_zone       = data.aws_availability_zones.available.names[count.index]
   map_public_ip_on_launch = true
-  tags = merge(local.tags, { Name = "pldr-main-public-${count.index}" })
+  tags                    = merge(local.tags, { Name = "pldr-main-public-${count.index}" })
 }
 
 resource "aws_subnet" "private" {
@@ -100,7 +101,7 @@ resource "aws_subnet" "private" {
   vpc_id            = aws_vpc.this.id
   cidr_block        = cidrsubnet("10.20.0.0/16", 4, count.index + 10)
   availability_zone = data.aws_availability_zones.available.names[count.index]
-  tags = merge(local.tags, { Name = "pldr-main-private-${count.index}" })
+  tags              = merge(local.tags, { Name = "pldr-main-private-${count.index}" })
 }
 
 ############################
@@ -376,7 +377,7 @@ resource "aws_iam_role_policy" "dynamodb_access" {
           aws_dynamodb_table.global_table.arn,
           "${aws_dynamodb_table.global_table.arn}/*",
           # 하드코딩 대신 변수 사용
-          "arn:aws:dynamodb:*:*:table/${aws_dynamodb_table.global_table.name}" 
+          "arn:aws:dynamodb:*:*:table/${aws_dynamodb_table.global_table.name}"
         ]
       }
     ]
@@ -409,7 +410,7 @@ resource "aws_launch_template" "web" {
   instance_type = "t3.micro"
 
   block_device_mappings {
-    device_name = "/dev/xvda" 
+    device_name = "/dev/xvda"
     ebs {
       volume_size = 8
       volume_type = "gp3"
@@ -417,7 +418,7 @@ resource "aws_launch_template" "web" {
   }
 
   vpc_security_group_ids = [aws_security_group.web.id]
-  
+
   iam_instance_profile {
     name = aws_iam_instance_profile.ec2.name
   }
@@ -428,77 +429,77 @@ resource "aws_launch_template" "web" {
 
   # [수정] SSM Agent 설치 로직 추가
   user_data = base64encode(<<-EOF
-              #!/bin/bash
-              set -e
+    #!/bin/bash
+    set -e
 
-              # 1. SSM Agent 설치 및 실행 (NAT를 통해 설치)
-              dnf install -y amazon-ssm-agent
-              systemctl enable amazon-ssm-agent
-              systemctl start amazon-ssm-agent
+    # 1. SSM Agent 설치 및 실행 (NAT를 통해 설치)
+    dnf install -y amazon-ssm-agent
+    systemctl enable amazon-ssm-agent
+    systemctl start amazon-ssm-agent
 
-              # 2. Nginx 설치 및 설정
-              dnf install -y nginx
-              setsebool -P httpd_can_network_connect 1
+    # 2. Nginx 설치 및 설정
+    dnf install -y nginx
+    setsebool -P httpd_can_network_connect 1
 
-              cat > /etc/nginx/conf.d/app_proxy.conf <<NGINX
-              server {
-                  listen 80;
-                  server_name _;
+    cat > /etc/nginx/conf.d/app_proxy.conf <<NGINX
+    server {
+        listen 80;
+        server_name _;
 
-                  location / {
-                      root   /usr/share/nginx/html;
-                      index  index.html;
-                  }
+        location / {
+            root   /usr/share/nginx/html;
+            index  index.html;
+        }
 
-                  location /api/ {
-                      proxy_pass http://app.internal.pldr:8080/;
-                      proxy_set_header Host \$host;
-                      proxy_set_header X-Real-IP \$remote_addr;
-                      proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
-                      proxy_set_header X-Forwarded-Proto \$scheme;
-                  }
-              }
-              NGINX
+        location /api/ {
+            proxy_pass http://app.internal.pldr:8080/;
+            proxy_set_header Host \$host;
+            proxy_set_header X-Real-IP \$remote_addr;
+            proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
+            proxy_set_header X-Forwarded-Proto \$scheme;
+        }
+    }
+    NGINX
 
-              rm -f /etc/nginx/conf.d/default.conf || true
-              systemctl enable nginx
-              systemctl restart nginx
+    rm -f /etc/nginx/conf.d/default.conf || true
+    systemctl enable nginx
+    systemctl restart nginx
 
-              cat > /usr/share/nginx/html/index.html <<'HTML'
-              <!DOCTYPE html>
-              <html lang="ko">
-                <head><title>Pilot Light Service (Main)</title></head>
-                <body>
-                  <h1>Main Site - Seoul (ASG)</h1>
-                  <form id="data-form">
-                    <input type="text" name="name" placeholder="Name" required><br>
-                    <textarea name="message" placeholder="Message" required></textarea><br>
-                    <button type="submit">Submit</button>
-                  </form>
-                  <div id="result"></div>
-                  <script>
-                    document.getElementById('data-form').addEventListener('submit', function(e) {
-                      e.preventDefault();
-                      const data = { 
-                        name: e.target.name.value, 
-                        message: e.target.message.value 
-                      };
-                      fetch('/api/submit', {
-                        method: 'POST',
-                        headers: {'Content-Type': 'application/json'},
-                        body: JSON.stringify(data)
-                      }).then(r => r.json())
-                        .then(d => {
-                           alert('Success: ' + JSON.stringify(d));
-                           document.getElementById('data-form').reset();
-                        })
-                        .catch(e => alert('Error: ' + e));
-                    });
-                  </script>
-                </body>
-              </html>
-              HTML
-              EOF
+    cat > /usr/share/nginx/html/index.html <<'HTML'
+    <!DOCTYPE html>
+    <html lang="ko">
+      <head><title>Pilot Light Service (Main)</title></head>
+      <body>
+        <h1>Main Site - Seoul (ASG)</h1>
+        <form id="data-form">
+          <input type="text" name="name" placeholder="Name" required><br>
+          <textarea name="message" placeholder="Message" required></textarea><br>
+          <button type="submit">Submit</button>
+        </form>
+        <div id="result"></div>
+        <script>
+          document.getElementById('data-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const data = {
+              name: e.target.name.value,
+              message: e.target.message.value
+            };
+            fetch('/api/submit', {
+              method: 'POST',
+              headers: {'Content-Type': 'application/json'},
+              body: JSON.stringify(data)
+            }).then(r => r.json())
+              .then(d => {
+                 alert('Success: ' + JSON.stringify(d));
+                 document.getElementById('data-form').reset();
+              })
+              .catch(e => alert('Error: ' + e));
+          });
+        </script>
+      </body>
+    </html>
+    HTML
+    EOF
   )
 
   tag_specifications {
@@ -508,15 +509,15 @@ resource "aws_launch_template" "web" {
 }
 
 resource "aws_autoscaling_group" "web" {
-  name                = "pldr-main-web-asg"
-  vpc_zone_identifier = aws_subnet.private[*].id
-  target_group_arns   = [aws_lb_target_group.web.arn]
-  health_check_type   = "ELB"
+  name                      = "pldr-main-web-asg"
+  vpc_zone_identifier       = aws_subnet.private[*].id
+  target_group_arns         = [aws_lb_target_group.web.arn]
+  health_check_type         = "ELB"
   health_check_grace_period = 300
 
-  desired_capacity    = var.enable_compute ? 2 : 0
-  min_size            = var.enable_compute ? 2 : 0
-  max_size            = var.enable_compute ? 4 : 0
+  desired_capacity = var.enable_compute ? 2 : 0
+  min_size         = var.enable_compute ? 2 : 0
+  max_size         = var.enable_compute ? 4 : 0
 
   launch_template {
     id      = aws_launch_template.web.id
@@ -548,7 +549,7 @@ resource "aws_launch_template" "app" {
   instance_type = "t3.micro"
 
   block_device_mappings {
-    device_name = "/dev/xvda" 
+    device_name = "/dev/xvda"
     ebs {
       volume_size = 8
       volume_type = "gp3"
@@ -567,101 +568,101 @@ resource "aws_launch_template" "app" {
 
   # [수정] SSM Agent 설치 로직 추가
   user_data = base64encode(<<-EOF
-            #!/bin/bash
-            set -e
+    #!/bin/bash
+    set -e
 
-            # 1. SSM Agent 설치 및 실행 (NAT를 통해 설치)
-            dnf install -y amazon-ssm-agent
-            systemctl enable amazon-ssm-agent
-            systemctl start amazon-ssm-agent
+    # 1. SSM Agent 설치 및 실행 (NAT를 통해 설치)
+    dnf install -y amazon-ssm-agent
+    systemctl enable amazon-ssm-agent
+    systemctl start amazon-ssm-agent
 
-            # 2. Python/Flask 환경 구성
-            dnf install -y python3-pip
-            pip3 install flask gunicorn boto3
+    # 2. Python/Flask 환경 구성
+    dnf install -y python3-pip
+    pip3 install flask gunicorn boto3
 
-            # Flask App Code
-            cat > /app.py <<'APP'
-            from flask import Flask, jsonify, request
-            import boto3
-            import uuid
-            import os
-            from datetime import datetime
+    # Flask App Code
+    cat > /app.py <<'APP'
+    from flask import Flask, jsonify, request
+    import boto3
+    import uuid
+    import os
+    from datetime import datetime
 
-            app = Flask(__name__)
+    app = Flask(__name__)
 
-            # 서울 리전 설정
-            REGION = 'ap-south-1'
-            
-            # [수정] Terraform 변수로 생성된 실제 테이블 이름을 주입
-            TABLE_NAME = '${aws_dynamodb_table.global_table.name}'
+    # 서울 리전 설정
+    REGION = 'ap-south-1'
 
-            dynamodb = boto3.resource('dynamodb', region_name=REGION)
-            table = dynamodb.Table(TABLE_NAME)
+    # [수정] Terraform 변수로 생성된 실제 테이블 이름을 주입
+    TABLE_NAME = '${aws_dynamodb_table.global_table.name}'
 
-            @app.route("/")
-            def health():
-                return "OK (Main)"
+    dynamodb = boto3.resource('dynamodb', region_name=REGION)
+    table = dynamodb.Table(TABLE_NAME)
 
-            @app.route("/submit", methods=["POST"])
-            def submit_data():
-                try:
-                    data = request.json
-                    name = data.get("name")
-                    message = data.get("message")
-                    
-                    if not name or not message:
-                        return jsonify({"error": "Missing data"}), 400
+    @app.route("/")
+    def health():
+        return "OK (Main)"
 
-                    unique_id = str(uuid.uuid4())
-                    timestamp = datetime.utcnow().isoformat() + 'Z'
+    @app.route("/submit", methods=["POST"])
+    def submit_data():
+        try:
+            data = request.json
+            name = data.get("name")
+            message = data.get("message")
 
-                    item = {
-                        'PK': unique_id,
-                        'SK': 'SUBMISSION',
-                        'name': name,
-                        'message': message,
-                        'timestamp': timestamp,
-                        'source_region': REGION
-                    }
-                    
-                    table.put_item(Item=item)
-                    
-                    return jsonify({
-                        "success": True, 
-                        "message": "Saved to Global Table (Seoul)", 
-                        "submitted_name": name
-                    }), 200
+            if not name or not message:
+                return jsonify({"error": "Missing data"}), 400
 
-                except Exception as e:
-                    print(f"Error: {e}")
-                    return jsonify({"error": str(e)}), 500
+            unique_id = str(uuid.uuid4())
+            timestamp = datetime.utcnow().isoformat() + 'Z'
 
-            if __name__ == "__main__":
-                app.run(host="0.0.0.0", port=8080)
-            APP
+            item = {
+                'PK': unique_id,
+                'SK': 'SUBMISSION',
+                'name': name,
+                'message': message,
+                'timestamp': timestamp,
+                'source_region': REGION
+            }
 
-            # Systemd Service 등록
-            cat > /etc/systemd/system/pldr-app.service <<SERVICE
-            [Unit]
-            Description=Gunicorn instance to serve pldr-app
-            After=network.target
+            table.put_item(Item=item)
 
-            [Service]
-            User=root
-            Group=root
-            WorkingDirectory=/
-            Environment="PATH=/usr/local/bin:/usr/bin:/bin"
-            ExecStart=/usr/local/bin/gunicorn --workers 3 --bind 0.0.0.0:8080 app:app
-            Restart=always
+            return jsonify({
+                "success": True,
+                "message": "Saved to Global Table (Seoul)",
+                "submitted_name": name
+            }), 200
 
-            [Install]
-            WantedBy=multi-user.target
-            SERVICE
+        except Exception as e:
+            print(f"Error: {e}")
+            return jsonify({"error": str(e)}), 500
 
-            systemctl daemon-reload
-            systemctl start pldr-app
-            systemctl enable pldr-app
-            EOF
+    if __name__ == "__main__":
+        app.run(host="0.0.0.0", port=8080)
+    APP
+
+    # Systemd Service 등록
+    cat > /etc/systemd/system/pldr-app.service <<SERVICE
+    [Unit]
+    Description=Gunicorn instance to serve pldr-app
+    After=network.target
+
+    [Service]
+    User=root
+    Group=root
+    WorkingDirectory=/
+    Environment="PATH=/usr/local/bin:/usr/bin:/bin"
+    ExecStart=/usr/local/bin/gunicorn --workers 3 --bind 0.0.0.0:8080 app:app
+    Restart=always
+
+    [Install]
+    WantedBy=multi-user.target
+    SERVICE
+
+    systemctl daemon-reload
+    systemctl start pldr-app
+    systemctl enable pldr-app
+    EOF
   )
 
   tag_specifications {
@@ -671,15 +672,15 @@ resource "aws_launch_template" "app" {
 }
 
 resource "aws_autoscaling_group" "app" {
-  name                = "pldr-main-app-asg"
-  vpc_zone_identifier = aws_subnet.private[*].id
-  target_group_arns   = [aws_lb_target_group.app.arn]
-  health_check_type   = "ELB"
+  name                      = "pldr-main-app-asg"
+  vpc_zone_identifier       = aws_subnet.private[*].id
+  target_group_arns         = [aws_lb_target_group.app.arn]
+  health_check_type         = "ELB"
   health_check_grace_period = 300
 
-  desired_capacity    = var.enable_compute ? 2 : 0
-  min_size            = var.enable_compute ? 2 : 0
-  max_size            = var.enable_compute ? 4 : 0
+  desired_capacity = var.enable_compute ? 2 : 0
+  min_size         = var.enable_compute ? 2 : 0
+  max_size         = var.enable_compute ? 4 : 0
 
   launch_template {
     id      = aws_launch_template.app.id
@@ -741,12 +742,12 @@ resource "aws_lb_listener" "http" {
 # Internal NLB (APP Tier)
 ############################
 resource "aws_lb" "app_nlb" {
-  name               = "pldr-main-app-nlb"
-  load_balancer_type = "network"
-  internal           = true
-  subnets            = aws_subnet.private[*].id
+  name                             = "pldr-main-app-nlb"
+  load_balancer_type               = "network"
+  internal                         = true
+  subnets                          = aws_subnet.private[*].id
   enable_cross_zone_load_balancing = true
-  tags = local.tags
+  tags                             = local.tags
 }
 
 resource "aws_lb_target_group" "app" {
@@ -822,3 +823,4 @@ output "dynamodb_table_name" {
   description = "생성된 DynamoDB Global Table 이름"
   value       = aws_dynamodb_table.global_table.name
 }
+```
