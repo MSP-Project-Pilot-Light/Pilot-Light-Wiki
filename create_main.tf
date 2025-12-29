@@ -447,7 +447,7 @@ resource "aws_launch_template" "web" {
             proxy_set_header X-Forwarded-Proto \$scheme;
         }
     }
-NGINX
+    NGINX
 
     rm -f /etc/nginx/conf.d/default.conf || true
     systemctl enable nginx
@@ -486,8 +486,8 @@ NGINX
         </script>
       </body>
     </html>
-HTML
-  EOF)
+  HTML
+  EOF )
 
   tag_specifications {
     resource_type = "instance"
