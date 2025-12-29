@@ -2,10 +2,10 @@ terraform {
   required_version = ">= 1.5.0"
 
   backend "s3" {
-    bucket         = "pldr-tfstate-ap-northeast-2"
-    key            = "dev/main/ap-northeast-2/terraform.tfstate"
-    region         = "ap-northeast-2"
-    dynamodb_table = "pldr-terraform-lock-ap-northeast-2"
+    bucket         = "pldr-tfstate-ap-south-1"
+    key            = "dev/main/ap-south-1/terraform.tfstate"
+    region         = "ap-south-1"
+    dynamodb_table = "pldr-terraform-lock-ap-south-1"
     encrypt        = true
   }
 
@@ -29,7 +29,7 @@ terraform {
 # Provider (Main Region: Seoul)
 ############################
 provider "aws" {
-  region = "ap-northeast-2"
+  region = "ap-south-1"
 }
 
 ############################
@@ -52,7 +52,7 @@ locals {
     Project = local.project
     Env     = local.env
     Role    = "main"
-    Region  = "ap-northeast-2"
+    Region  = "ap-south-1"
   }
 }
 
@@ -161,7 +161,7 @@ resource "aws_route_table_association" "private" {
 ############################
 resource "aws_vpc_endpoint" "s3" {
   vpc_id            = aws_vpc.this.id
-  service_name      = "com.amazonaws.ap-northeast-2.s3"
+  service_name      = "com.amazonaws.ap-south-1.s3"
   vpc_endpoint_type = "Gateway"
   route_table_ids   = [aws_route_table.private.id]
   tags              = local.tags
@@ -169,7 +169,7 @@ resource "aws_vpc_endpoint" "s3" {
 
 resource "aws_vpc_endpoint" "dynamodb" {
   vpc_id            = aws_vpc.this.id
-  service_name      = "com.amazonaws.ap-northeast-2.dynamodb"
+  service_name      = "com.amazonaws.ap-south-1.dynamodb"
   vpc_endpoint_type = "Gateway"
   route_table_ids   = [aws_route_table.private.id]
   tags              = local.tags
@@ -300,7 +300,7 @@ resource "aws_security_group" "ssm_endpoint" {
 
 resource "aws_vpc_endpoint" "ssm" {
   vpc_id              = aws_vpc.this.id
-  service_name        = "com.amazonaws.ap-northeast-2.ssm"
+  service_name        = "com.amazonaws.ap-south-1.ssm"
   vpc_endpoint_type   = "Interface"
   subnet_ids          = aws_subnet.private[*].id
   security_group_ids  = [aws_security_group.ssm_endpoint.id]
@@ -310,7 +310,7 @@ resource "aws_vpc_endpoint" "ssm" {
 
 resource "aws_vpc_endpoint" "ssmmessages" {
   vpc_id              = aws_vpc.this.id
-  service_name        = "com.amazonaws.ap-northeast-2.ssmmessages"
+  service_name        = "com.amazonaws.ap-south-1.ssmmessages"
   vpc_endpoint_type   = "Interface"
   subnet_ids          = aws_subnet.private[*].id
   security_group_ids  = [aws_security_group.ssm_endpoint.id]
@@ -320,7 +320,7 @@ resource "aws_vpc_endpoint" "ssmmessages" {
 
 resource "aws_vpc_endpoint" "ec2messages" {
   vpc_id              = aws_vpc.this.id
-  service_name        = "com.amazonaws.ap-northeast-2.ec2messages"
+  service_name        = "com.amazonaws.ap-south-1.ec2messages"
   vpc_endpoint_type   = "Interface"
   subnet_ids          = aws_subnet.private[*].id
   security_group_ids  = [aws_security_group.ssm_endpoint.id]
@@ -572,7 +572,7 @@ resource "aws_launch_template" "app" {
 
     app = Flask(__name__)
 
-    REGION = 'ap-northeast-2'
+    REGION = 'ap-south-1'
     TABLE_NAME = '${aws_dynamodb_table.global_table.name}'
 
     dynamodb = boto3.resource('dynamodb', region_name=REGION)
