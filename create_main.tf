@@ -565,7 +565,7 @@ resource "aws_launch_template" "app" {
     dnf install -y python3-pip
     pip3 install flask gunicorn boto3
 
-    cat > /app.py <<'APP'
+    cat > /app.py <<APP
     from flask import Flask, jsonify, request
     import boto3
     import uuid
@@ -614,7 +614,7 @@ resource "aws_launch_template" "app" {
 
     if __name__ == "__main__":
         app.run(host="0.0.0.0", port=8080)
-APP
+    APP
 
     cat > /etc/systemd/system/pldr-app.service <<SERVICE
     [Unit]
@@ -631,12 +631,13 @@ APP
 
     [Install]
     WantedBy=multi-user.target
-SERVICE
+    SERVICE
 
     systemctl daemon-reload
     systemctl start pldr-app
     systemctl enable pldr-app
-  EOF)
+  EOF
+  )
 
   tag_specifications {
     resource_type = "instance"
