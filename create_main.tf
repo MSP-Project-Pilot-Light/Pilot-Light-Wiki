@@ -822,4 +822,3 @@ output "dynamodb_table_name" {
   description = "생성된 DynamoDB Global Table 이름"
   value       = aws_dynamodb_table.global_table.name
 }
-```
