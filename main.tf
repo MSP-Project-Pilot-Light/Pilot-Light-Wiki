@@ -514,7 +514,7 @@ resource "aws_autoscaling_group" "web" {
   health_check_type   = "ELB"
   health_check_grace_period = 300
 
-  desired_capacity    = var.enable_compute ? 0 : 0
+  desired_capacity    = var.enable_compute ? 2 : 0
   min_size            = var.enable_compute ? 2 : 0
   max_size            = var.enable_compute ? 4 : 0
 
@@ -677,7 +677,7 @@ resource "aws_autoscaling_group" "app" {
   health_check_type   = "ELB"
   health_check_grace_period = 300
 
-  desired_capacity    = var.enable_compute ? 0 : 0
+  desired_capacity    = var.enable_compute ? 2 : 0
   min_size            = var.enable_compute ? 2 : 0
   max_size            = var.enable_compute ? 4 : 0
 
@@ -823,3 +823,4 @@ output "dynamodb_table_name" {
   value       = aws_dynamodb_table.global_table.name
 
 }
+
