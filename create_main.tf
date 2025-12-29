@@ -453,7 +453,7 @@ resource "aws_launch_template" "web" {
     systemctl enable nginx
     systemctl restart nginx
 
-    cat > /usr/share/nginx/html/index.html <<'HTML'
+    cat > /usr/share/nginx/html/index.html <<HTML
     <!DOCTYPE html>
     <html lang="ko">
       <head><title>Pilot Light Service (Main)</title></head>
