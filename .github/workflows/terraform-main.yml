@@ -47,6 +47,11 @@ jobs:
         with:
           terraform_version: 1.5.7
 
+      - name: List files for diagnosis
+        run: |
+          echo "Current working directory: $(pwd)"
+          ls -R
+
       # 4. Terraform fmt (검사)
       - name: Terraform fmt
         run: terraform fmt -check -recursive
