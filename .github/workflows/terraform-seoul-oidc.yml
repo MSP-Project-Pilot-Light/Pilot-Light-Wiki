@@ -22,7 +22,7 @@ jobs:
   terraform:
     runs-on: ubuntu-latest
     env:
-      AWS_REGION: eu-west-Ireland
+      AWS_REGION: ap-northeast-2
       TF_IN_AUTOMATION: "true"
 
     steps:
@@ -33,7 +33,7 @@ jobs:
         uses: aws-actions/configure-aws-credentials@v4
         with:
           role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
-          aws-region: eu-southwest-1
+          aws-region: ap-northeast-2
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
         with:
