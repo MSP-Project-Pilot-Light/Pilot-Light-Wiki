@@ -6,7 +6,7 @@ on:
       action:
         description: "Terraform 실행 동작"
         required: true
-        default: "apply"
+        default: "destroy"
         type: choice
         options:
           - apply
