@@ -1,0 +1,97 @@
+name: DR Terraform (main eu-west-1 + dr eu-west-2)
+
+on:
+  workflow_dispatch:
+    inputs:
+      action:
+        description: "apply or destroy"
+        required: true
+        default: "apply"
+        type: choice
+        options: [apply, destroy]
+      tf_log:
+        description: "Terraform log level"
+        required: false
+        default: "ERROR"
+        type: choice
+        options: [ERROR, WARN, INFO, DEBUG]
+
+permissions:
+  id-token: write   # OIDC
+  contents: read
+
+env:
+  TF_IN_AUTOMATION: "true"
+  TF_INPUT: "false"
+  TF_LOG: ${{ inputs.tf_log }}
+
+  # Backend (S3 + DynamoDB) - 너 환경값으로 변경
+  TF_BACKEND_BUCKET: "mj-terraform-backend-eu-west-1"
+  TF_BACKEND_DDB_TABLE: "mj-terraform-locks"
+  TF_BACKEND_REGION: "eu-west-1"
+
+  # OIDC Role (GitHub -> AWS AssumeRole)
+  AWS_ROLE_TO_ASSUME: "arn:aws:iam::<ACCOUNT_ID>:role/pr_dr_oidc_github"
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        stack:
+          - name: main
+            region: eu-west-1
+            dir: stacks/main
+            state_key: "megaticket/main/terraform.tfstate"
+          - name: dr
+            region: eu-west-2
+            dir: stacks/dr
+            state_key: "megaticket/dr/terraform.tfstate"
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ env.AWS_ROLE_TO_ASSUME }}
+          aws-region: ${{ matrix.stack.region }}
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: "1.6.6"
+
+      - name: Terraform Init
+        working-directory: ${{ matrix.stack.dir }}
+        run: |
+          terraform init \
+            -backend-config="bucket=${TF_BACKEND_BUCKET}" \
+            -backend-config="key=${{ matrix.stack.state_key }}" \
+            -backend-config="region=${TF_BACKEND_REGION}" \
+            -backend-config="dynamodb_table=${TF_BACKEND_DDB_TABLE}" \
+            -backend-config="encrypt=true"
+
+      - name: Terraform Validate
+        working-directory: ${{ matrix.stack.dir }}
+        run: terraform validate
+
+      - name: Terraform Plan
+        working-directory: ${{ matrix.stack.dir }}
+        run: |
+          if [ "${{ inputs.action }}" = "destroy" ]; then
+            terraform plan -destroy -out tfplan
+          else
+            terraform plan -out tfplan
+          fi
+
+      - name: Terraform Apply / Destroy
+        working-directory: ${{ matrix.stack.dir }}
+        run: |
+          if [ "${{ inputs.action }}" = "destroy" ]; then
+            terraform apply -auto-approve tfplan
+          else
+            terraform apply -auto-approve tfplan
+          fi
