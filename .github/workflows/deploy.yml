@@ -1,4 +1,4 @@
-name: Deploy (Select Region / Service)
+name: Deploy (Select Region / Service) + OIDC
 
 on:
   workflow_dispatch:
@@ -10,7 +10,7 @@ on:
         required: true
       service:
         type: choice
-        description: "Service to deploy"
+        description: "Service to build (and later deploy)"
         options: [web, app]
         required: true
 
@@ -18,20 +18,49 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
 
-    steps:
-      - uses: actions/checkout@v4
+    # OIDC 필수 권한
+    permissions:
+      id-token: write
+      contents: read
 
-      - uses: actions/setup-node@v4
+    # 리전 매핑 (main=서울, dr=도쿄)
+    env:
+      AWS_REGION: ${{ inputs.region == 'main' && 'ap-northeast-2' || 'ap-northeast-1' }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
         with:
           node-version: 20
+          cache: npm
 
+      # lockfile 없어서 npm ci 대신 npm install
       - name: Install dependencies
         run: npm install
 
-      - name: Build WEB
+      # ---------- OIDC 인증 ----------
+      - name: Configure AWS credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      # 콘솔/CloudTrail에 흔적 남는 "인증 검증" (가장 안전한 확인)
+      - name: Verify AWS identity (STS)
+        run: aws sts get-caller-identity
+
+      # (선택) 읽기 작업으로 권한 범위도 같이 체크하고 싶으면 주석 해제
+      # - name: Read-only check (S3 list)
+      #   run: aws s3 ls
+
+      # ---------- Build ----------
+      - name: Build WEB (turbo)
         if: ${{ inputs.service == 'web' }}
         run: npm run build:web
 
-      - name: Build APP
+      - name: Build APP (turbo)
         if: ${{ inputs.service == 'app' }}
         run: npm run build:app
