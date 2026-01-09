@@ -39,7 +39,7 @@ jobs:
 
       # lockfile 없어서 npm ci 대신 npm install
       - name: Install dependencies
-        run: npm install
+        run: npm ci
 
       # ---------- OIDC 인증 ----------
       - name: Configure AWS credentials (OIDC)
