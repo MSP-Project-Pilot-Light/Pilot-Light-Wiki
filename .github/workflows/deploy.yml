@@ -1,0 +1,37 @@
+name: Deploy (Select Region / Service)
+
+on:
+  workflow_dispatch:
+    inputs:
+      region:
+        type: choice
+        description: "Target region"
+        options: [main, dr]
+        required: true
+      service:
+        type: choice
+        description: "Service to deploy"
+        options: [web, app]
+        required: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Build WEB
+        if: ${{ inputs.service == 'web' }}
+        run: npm run build:web
+
+      - name: Build APP
+        if: ${{ inputs.service == 'app' }}
+        run: npm run build:app
